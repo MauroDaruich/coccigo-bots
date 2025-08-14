@@ -39,17 +39,37 @@ app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
 // Pantalla de login (HTML ultra simple)
 app.get('/login', (req, res) => {
   res.send(`<!doctype html>
-  <html lang="es"><head><meta charset="utf-8"><title>Login</title></head>
-  <body style="font-family:sans-serif;max-width:480px;margin:40px auto;">
-    <h2>Login de prueba</h2>
-    <form method="POST" action="/login">
-      <label>Usuario o Email</label><br/>
-      <input name="identifier" placeholder="AaronShawn o aaron...@gmail.com" required style="width:100%;padding:8px"/><br/><br/>
-      <label>Contraseña</label><br/>
-      <input name="password" type="password" required style="width:100%;padding:8px"/><br/><br/>
-      <button type="submit" style="padding:8px 12px;">Entrar</button>
+  <html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 420px; margin: 48px auto; padding: 0 16px; }
+      h2 { margin: 0 0 16px; font-weight: 700; }
+      form { display: grid; gap: 12px; }
+      label { font-size: 14px; opacity: .8; }
+      input { padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; width: 100%; }
+      button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; }
+      button { background: #4f46e5; color: white; font-weight: 600; }
+      .hint { margin-top: 10px; font-size: 12px; opacity: .7; }
+    </style>
+  </head>
+  <body>
+    <h2>Login</h2>
+    <form method="POST" action="/login" autocomplete="off">
+      <div>
+        <label for="identifier">Usuario o Email</label>
+        <input id="identifier" name="identifier" placeholder="Tu usuario o mail" required />
+      </div>
+      <div>
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" placeholder="••••••••" required />
+      </div>
+      <button type="submit">Entrar</button>
     </form>
-    <p style="margin-top:16px;color:#666">Probá con:<br/>Usuario: <b>AaronShawn</b> (o email)<br/>Pass: <b>1168492150Mau</b></p>
+    <p class="hint">Si no recordás tus credenciales, pedilas al admin.</p>
   </body></html>`);
 });
 
