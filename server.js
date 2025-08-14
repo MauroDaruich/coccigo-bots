@@ -1,4 +1,4 @@
-// server.js — Login + sesión JWT (cookie) + Dashboard básico
+// server.js — Login + JWT (cookie) + Dashboard con Métricas
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -33,7 +33,8 @@ const userSchema = new mongoose.Schema(
     email: { type: String, unique: true, required: true },
     username: { type: String, unique: true, required: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, default: 'admin' }
+    role: { type: String, default: 'admin' },
+    lastLogin: { type: Date } // 👈 para métricas
   },
   { timestamps: true }
 );
@@ -93,8 +94,7 @@ app.get('/login', (req, res) => {
     form { display: grid; gap: 12px; }
     label { font-size: 14px; opacity: .8; }
     input { padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; width: 100%; }
-    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; }
-    button { background: #4f46e5; color: white; font-weight: 600; }
+    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; background: #4f46e5; color: white; font-weight: 600; }
     .hint { margin-top: 10px; font-size: 12px; opacity: .7; }
     .msg { margin: 12px 0; color: #ef4444; }
   </style>
@@ -131,6 +131,10 @@ app.post('/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).send('Credenciales inválidas');
 
+    // 👇 guardamos último login
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = signToken(user);
     setAuthCookie(res, token);
     res.redirect('/dashboard');
@@ -151,12 +155,16 @@ app.get('/dashboard', authRequired, (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 16px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 980px; margin: 48px auto; padding: 0 16px; }
     header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
-    .card { border:1px solid #ccc; border-radius:14px; padding:16px; margin-bottom:16px; }
+    .grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card { border:1px solid #3a3a3a55; border-radius:14px; padding:16px; }
+    .card h3 { margin:0 0 8px; font-size:16px; opacity:.9 }
+    .big { font-size:28px; font-weight:700; }
     button { padding: 8px 12px; border-radius:10px; border:0; background:#ef4444; color:white; cursor:pointer; }
     .muted { opacity:.7 }
-    code { padding:2px 6px; border-radius:8px; border:1px solid #ccc; }
+    code { padding:2px 6px; border-radius:8px; border:1px solid #3a3a3a55; }
+    pre { white-space:pre-wrap; word-break:break-word; }
   </style>
 </head>
 <body>
@@ -168,7 +176,15 @@ app.get('/dashboard', authRequired, (req, res) => {
   <div class="card">
     <h3>Hola, ${username} 👋</h3>
     <p class="muted">Rol: <code>${role}</code></p>
-    <p>Bienvenido al panel admin básico. Después metemos tarjetas con métricas, usuarios, etc.</p>
+    <p>Bienvenido al panel admin básico. Acá abajo ya tenés <b>métricas en vivo</b>.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h3>Total usuarios</h3><div id="totalUsers" class="big">—</div></div>
+    <div class="card"><h3>Admins</h3><div id="admins" class="big">—</div></div>
+    <div class="card"><h3>Último login (tuyo)</h3><div id="lastLogin">—</div></div>
+    <div class="card"><h3>Uptime (server)</h3><div id="uptime">—</div></div>
+    <div class="card"><h3>DB State</h3><div id="dbState">—</div></div>
   </div>
 
   <div class="card">
@@ -177,10 +193,28 @@ app.get('/dashboard', authRequired, (req, res) => {
   </div>
 
   <script>
-    fetch('/me').then(r => r.json()).then(d => {
-      document.getElementById('me').textContent = JSON.stringify(d, null, 2);
-    }).catch(() => {
-      document.getElementById('me').textContent = 'No se pudo obtener la sesión.';
+    function fmtDate(s){
+      if(!s) return '—';
+      const d = new Date(s);
+      return d.toLocaleString();
+    }
+    function fmtUptime(sec){
+      const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = Math.floor(sec%60);
+      return \`\${h}h \${m}m \${s}s\`;
+    }
+
+    Promise.all([
+      fetch('/me').then(r=>r.json()).catch(()=>null),
+      fetch('/api/metrics').then(r=>r.json()).catch(()=>null)
+    ]).then(([me, metrics])=>{
+      document.getElementById('me').textContent = JSON.stringify(me, null, 2);
+      if(metrics){
+        document.getElementById('totalUsers').textContent = metrics.userCount ?? '—';
+        document.getElementById('admins').textContent = metrics.adminCount ?? '—';
+        document.getElementById('uptime').textContent = fmtUptime(metrics.uptimeSec ?? 0);
+        document.getElementById('dbState').textContent = metrics.dbStateText ?? metrics.dbState;
+        document.getElementById('lastLogin').textContent = fmtDate(metrics.myLastLogin);
+      }
     });
   </script>
 </body>
@@ -190,6 +224,33 @@ app.get('/dashboard', authRequired, (req, res) => {
 // ---------- API: quién soy (protegida) ----------
 app.get('/me', authRequired, (req, res) => {
   res.json({ ok: true, user: req.user });
+});
+
+// ---------- API: métricas (protegida) ----------
+app.get('/api/metrics', authRequired, async (req, res) => {
+  try {
+    const [userCount, adminCount, meDoc] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ role: 'admin' }),
+      User.findById(req.user.sub).select('lastLogin')
+    ]);
+
+    const dbState = mongoose.connection.readyState; // 0=disc,1=connected,2=connecting,3=disconnecting
+    const states = {0:'disconnected',1:'connected',2:'connecting',3:'disconnecting'};
+    res.json({
+      ok: true,
+      userCount,
+      adminCount,
+      myLastLogin: meDoc?.lastLogin || null,
+      uptimeSec: Math.floor(process.uptime()),
+      dbState,
+      dbStateText: states[dbState] || String(dbState),
+      now: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('Error /api/metrics', e);
+    res.status(500).json({ ok:false, error: 'metrics_failed' });
+  }
 });
 
 // ---------- Logout ----------
