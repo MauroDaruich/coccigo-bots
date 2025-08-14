@@ -98,3 +98,18 @@ app.post('/login', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en ${PORT}`);
 });
+{
+  "name": "coccigo-bots",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.6.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
