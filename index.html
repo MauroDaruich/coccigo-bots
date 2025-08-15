@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CocciGO — Panel</title>
+  <style>
+    :root{
+      --bg:#0f1217;--panel:#171b22;--muted:#222832;--text:#e7ecf3;--sub:#9aa4b2;
+      --ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--brand:#62e3ff;--brand-2:#ff5b8a;
+      --stroke:#2a3240;--chip:#1d232f;--shadow:0 6px 24px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:linear-gradient(180deg,#0c1015, #0f1217 30%) fixed; color:var(--text);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{height:24px}
+    .brand-title{font-weight:700;letter-spacing:.2px}
+    nav a{color:var(--sub);text-decoration:none;margin-left:18px;padding:8px 10px;border-radius:10px}
+    nav a.active, nav a:hover{background:var(--chip);color:var(--text)}
+    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 14px 0;font-size:20px}
+    .p24{padding:20px}
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    label{font-size:12px;color:var(--sub);display:block;margin-bottom:6px}
+    input,select,button,textarea{
+      width:100%;background:#0f141c;color:var(--text);border:1px solid var(--stroke);
+      border-radius:12px;padding:10px 12px;outline:none;
+    }
+    input::placeholder{color:#5e6a7e}
+    textarea{min-height:110px;resize:vertical}
+    .btn{cursor:pointer;font-weight:600}
+    .btn-primary{background:linear-gradient(90deg,var(--brand),var(--brand-2));border:0;color:#0c0f14}
+    .btn-ghost{background:var(--chip)}
+    .btn-danger{background:#2a1216;border-color:#4d1d22;color:#ff9aa8}
+    .pill{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--stroke);padding:8px 12px;border-radius:999px;font-size:12px;color:var(--sub)}
+    .tabs{display:flex;gap:8px;margin:0 0 14px 0;flex-wrap:wrap}
+    .tab{padding:8px 12px;border:1px solid var(--stroke);border-radius:999px;background:var(--chip);color:var(--sub);cursor:pointer;font-size:13px}
+    .tab.active{color:#0a0e14;background:linear-gradient(90deg,var(--brand),var(--brand-2));border:0}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:12px;border-bottom:1px solid var(--stroke);text-align:left}
+    tbody tr:hover{background:#121723}
+    .status{font-weight:700;font-size:12px}
+    .status.ok{color:var(--ok)} .status.bad{color:var(--bad)} .status.idle{color:var(--sub)}
+    .hint{font-size:12px;color:var(--sub)}
+    .right{margin-left:auto}
+    .section-gap{margin-top:18px}
+    .badge{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--stroke);background:var(--chip);color:var(--sub)}
+    .srp{display:flex;gap:8px;align-items:center}
+    .switch{display:inline-flex;align-items:center;gap:10px}
+    .switch input{width:auto}
+    footer{opacity:.6;text-align:center;margin-top:40px;font-size:12px;color:var(--sub)}
+    /* Modal */
+    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{width:min(560px,92%)} .modal .card{padding:18px}
+    .show{display:flex}
+    /* Responsive */
+    @media (max-width:880px){ .grid-2,.grid-3{grid-template-columns:1fr} header{flex-wrap:wrap;gap:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand" id="brand">
+        <!-- Fix: el logo se inserta UNA sola vez -->
+        <img src="/logo.svg" alt="CocciGO" id="brandLogo">
+        <span class="brand-title">CocciGO</span>
+      </div>
+      <nav>
+        <a href="/" data-nav="home">Inicio</a>
+        <a href="/privado" data-nav="privado">Usuario Privado</a>
+        <a href="/admin" data-nav="admin">Admin</a>
+      </nav>
+    </header>
+
+    <!-- Inicio -->
+    <section id="page-home" class="grid">
+      <div class="card p24">
+        <h2>Inicio</h2>
+        <p class="hint">Esto queda en blanco por ahora. Después le metemos mensajes lindos 🙂</p>
+        <div class="section-gap">
+          <a class="btn btn-ghost" style="width:auto" href="/privado">Entrar (Usuario Privado)</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Usuario Privado -->
+    <section id="page-privado" class="grid" style="display:none">
+      <div class="card p24">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h2 style="margin:0">Panel privado</h2>
+          <span class="badge">Demo visual — listo para conectar API</span>
+        </div>
+
+        <!-- Tabs de modalidad -->
+        <div class="tabs" id="modeTabs">
+          <button class="tab active" data-mode="vuelos">Vuelos</button>
+          <button class="tab" data-mode="hospedajes">Hospedajes</button>
+          <button class="tab" data-mode="paquetes">Paquetes</button>
+        </div>
+
+        <!-- Form común + dinámico -->
+        <form id="searchForm" class="grid grid-3">
+          <!-- Origen / Región -->
+          <div>
+            <label>Origen (país/ciudad/continente) — opcional</label>
+            <input name="origen" placeholder="Ej: Buenos Aires, Argentina o Europa (opcional)" />
+          </div>
+
+          <!-- Destino / Sorprendeme (solo vuelos/paquetes) -->
+          <div data-field="destino">
+            <label>Destino — o activá “Sorprendeme”</label>
+            <input name="destino" placeholder="Ej: Madrid, París, Roma" />
+          </div>
+          <div class="srp" data-field="surprise">
+            <label class="switch"><input type="checkbox" name="sorprendeme"> Sorprendeme ✨</label>
+          </div>
+
+          <!-- Hospedajes: tipo -->
+          <div data-mode-only="hospedajes" style="display:none">
+            <label>Tipo de hospedaje</label>
+            <select name="tipoHospedaje">
+              <option value="">Cualquiera</option>
+              <option>Hotel</option>
+              <option>Departamento</option>
+              <option>Casa</option>
+              <option>Quinta</option>
+            </select>
+          </div>
+
+          <!-- Fechas -->
+          <div>
+            <label>Fecha de ingreso</label>
+            <input type="date" name="ingreso">
+          </div>
+          <div>
+            <label>Fecha de egreso</label>
+            <input type="date" name="egreso">
+          </div>
+
+          <!-- Pax -->
+          <div>
+            <label>Cantidad de personas</label>
+            <input type="number" name="pax" min="1" placeholder="Ej: 2">
+          </div>
+
+          <!-- Clase (vuelos/paquetes) -->
+          <div data-field="clase">
+            <label>Clase (solo vuelos/paquetes)</label>
+            <select name="clase">
+              <option value="">Cualquiera</option>
+              <option value="turista">Turista</option>
+              <option value="business">Business</option>
+              <option value="first">Primera</option>
+            </select>
+          </div>
+
+          <!-- Estrellas (solo hospedajes) -->
+          <div data-mode-only="hospedajes" style="display:none">
+            <label>Estrellas (opcional)</label>
+            <select name="estrellas">
+              <option value="">Cualquiera</option>
+              <option>1★</option><option>2★</option><option>3★</option><option>4★</option><option>5★</option>
+            </select>
+          </div>
+
+          <!-- Presupuesto -->
+          <div>
+            <label>Presupuesto aprox. (USD, opcional)</label>
+            <input name="budget" placeholder="Ej: 600">
+          </div>
+
+          <!-- Correo -->
+          <div class="grid-2" style="grid-column:1/-1">
+            <div>
+              <label>Correo</label>
+              <input type="email" name="email" placeholder="tu@mail.com">
+            </div>
+            <div>
+              <label>Modo</label>
+              <select name="modo">
+                <option value="normal">Normal</option>
+                <option value="sorprendeme">Sorprendeme</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="grid-column:1/-1;justify-content:flex-end">
+            <button type="button" id="toggleBot" class="btn btn-ghost">OFF — Bot apagado</button>
+            <button class="btn btn-primary" id="sendBtn" type="submit" style="width:auto">Enviar pedido</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Agentes trabajando (demo) -->
+      <div class="card p24 section-gap">
+        <h2>Agentes trabajando (demo)</h2>
+        <div class="hint" style="margin-bottom:10px">Incluye fecha, clase (cuando aplica) y pax.</div>
+        <div style="overflow-x:auto">
+          <table id="agentsTable">
+            <thead>
+              <tr>
+                <th>Estado</th>
+                <th>Tipo</th>
+                <th>Ruta / Destino</th>
+                <th>Fecha</th>
+                <th>Clase</th>
+                <th>Pax</th>
+                <th>Precio</th>
+                <th style="width:1%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Demo rows -->
+              <tr>
+                <td><span class="status ok">Disponible</span></td>
+                <td>Vuelo</td>
+                <td>Buenos Aires → Miami</td>
+                <td>2025-09-02</td>
+                <td>Turista</td>
+                <td>2</td>
+                <td>USD 560</td>
+                <td><button class="btn btn-ghost" data-action="reservar">Reservar</button></td>
+              </tr>
+              <tr>
+                <td><span class="status idle">En curso</span></td>
+                <td>Paquete</td>
+                <td>Madrid (Hotel 4★)</td>
+                <td>2025-10-12 → 2025-10-20</td>
+                <td>Business</td>
+                <td>2</td>
+                <td>USD 1.240</td>
+                <td><button class="btn btn-ghost" data-action="reservar">Reservar</button></td>
+              </tr>
+              <tr>
+                <td><span class="status bad">Cancelado</span></td>
+                <td>Vuelo</td>
+                <td>Buenos Aires → Miami</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td><button class="btn btn-danger" data-action="cancelar">Cancelar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin -->
+    <section id="page-admin" class="grid" style="display:none">
+      <div class="card p24">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h2 style="margin:0">CocciGO</h2>
+          <span class="badge">Admin</span>
+        </div>
+
+        <!-- Form de opciones (placeholder informativo) -->
+        <div class="grid grid-2 section-gap">
+          <div class="card p24">
+            <h2 style="margin-bottom:8px">Crear pedido</h2>
+            <p class="hint" style="margin-top:0">Elegí un destino puntual, una región o activá “Sorprendeme”.</p>
+
+            <div class="tabs" id="modeTabsAdmin">
+              <button class="tab active" data-mode="vuelos">Vuelos</button>
+              <button class="tab" data-mode="hospedajes">Hospedajes</button>
+              <button class="tab" data-mode="paquetes">Paquetes</button>
+            </div>
+
+            <form id="adminForm" class="grid">
+              <div class="grid grid-3">
+                <div>
+                  <label>Destino puntual</label>
+                  <input name="destino" placeholder="Ej: Madrid, París, Roma">
+                </div>
+                <div>
+                  <label>Región</label>
+                  <select name="region">
+                    <option value="">— Seleccionar —</option>
+                    <option>Europa</option><option>América</option><option>Asia</option><option>África</option><option>Oceanía</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Modo</label>
+                  <select name="modo">
+                    <option value="sorprendeme">Sorprendeme ✨</option>
+                    <option value="normal">Normal</option>
+                  </select>
+                </div>
+
+                <!-- Campos compartidos -->
+                <div>
+                  <label>Presupuesto aprox. (USD, opcional)</label>
+                  <input name="budget" placeholder="Ej: 600">
+                </div>
+                <div>
+                  <label>Correo</label>
+                  <input name="email" placeholder="tu@mail.com">
+                </div>
+              </div>
+
+              <div class="row" style="justify-content:flex-end;margin-top:8px">
+                <button type="button" class="btn btn-ghost" id="adminBot">OFF — (placeholder) Bot apagado</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card p24">
+            <h2>Opciones (placeholder)</h2>
+            <p class="hint">Faltan: Vuelos · Hospedajes · Paquetes + campos de origen/destino/fechas/clase/estrellas/cantidad…</p>
+          </div>
+        </div>
+
+        <!-- Agentes -->
+        <div class="card p24 section-gap">
+          <h2>Agentes trabajando (demo)</h2>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Estado</th><th>Ruta</th><th>Fecha</th><th>Clase</th><th>Pax</th><th>Precio</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="status ok">Disponible</span></td>
+                  <td>Buenos Aires — Miami</td>
+                  <td>2025-09-02</td>
+                  <td>Turista</td>
+                  <td>2</td>
+                  <td>USD 560</td>
+                  <td><button class="btn btn-ghost">Reservar</button></td>
+                </tr>
+                <tr>
+                  <td><span class="status bad">Cancelado</span></td>
+                  <td>Buenos Aires — Miami</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><button class="btn btn-danger">Cancelar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Gestión de usuarios -->
+        <div class="grid grid-2 section-gap">
+          <div class="card p24">
+            <h2>Otorgar usuario y contraseña</h2>
+            <form id="createUserForm" class="grid">
+              <div>
+                <label>mail</label>
+                <input name="mail" placeholder="correo@dominio.com" />
+              </div>
+              <div>
+                <label>contraseña</label>
+                <input type="password" name="pass" placeholder="********" />
+              </div>
+              <div class="row" style="justify-content:flex-end">
+                <button class="btn btn-primary" style="width:auto">Crear (placeholder)</button>
+              </div>
+            </form>
+          </div>
+          <div class="card p24">
+            <h2>Banear usuario</h2>
+            <form id="banUserForm" class="grid">
+              <div>
+                <label>mail</label>
+                <input name="mail" placeholder="correo@dominio.com" />
+              </div>
+              <div class="row" style="justify-content:flex-end">
+                <button class="btn btn-danger" style="width:auto">Banear (placeholder)</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Bots en ejecución -->
+        <div class="card p24 section-gap">
+          <h2>Bots en ejecución (demo)</h2>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuario</th><th>Inicio</th><th>Fin</th><th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="botsRows">
+                <tr>
+                  <td>juan@mail.com</td>
+                  <td>2025-08-14 10:00</td>
+                  <td>2025-08-14 10:45</td>
+                  <td><button class="btn btn-ghost">Detener (placeholder)</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <footer>© CocciGO — demo UI. Conectar API: reemplazar los “TODO fetch()”.</footer>
+  </div>
+
+  <!-- Modal genérico -->
+  <div class="modal-back" id="modalBack">
+    <div class="modal">
+      <div class="card">
+        <h2 id="modalTitle">Acción</h2>
+        <p id="modalBody" class="hint">Confirmá para continuar.</p>
+        <div class="row" style="justify-content:flex-end;margin-top:10px">
+          <button class="btn btn-ghost" id="modalCancel" style="width:auto">Cerrar</button>
+          <button class="btn btn-primary" id="modalOk" style="width:auto">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ——— Navegación activa + routing simple por pathname ———
+    (function initNav(){
+      const path = (location.pathname || "/").toLowerCase();
+      const map = {
+        "/": "home",
+        "/inicio": "home",
+        "/privado": "privado",
+        "/admin": "admin"
+      };
+      const key = map[path] || "home";
+      document.querySelectorAll('nav a').forEach(a=>{
+        if(a.getAttribute('data-nav')===key) a.classList.add('active');
+      });
+      // Mostrar sección correspondiente
+      showPage(key);
+    })();
+
+    function showPage(key){
+      document.getElementById('page-home').style.display = key==="home" ? "grid":"none";
+      document.getElementById('page-privado').style.display = key==="privado" ? "grid":"none";
+      document.getElementById('page-admin').style.display  = key==="admin" ? "grid":"none";
+    }
+
+    // ——— Fix: no duplicar logo aunque se rehidrate el header ———
+    (function fixLogoDup(){
+      const brand = document.getElementById('brand');
+      const imgs = brand.querySelectorAll('img#brandLogo');
+      if(imgs.length > 1){
+        // Dejar solo la primera
+        imgs.forEach((img,i)=>{ if(i>0) img.remove(); });
+      }
+    })();
+
+    // ——— Tabs de modalidad (Privado + Admin) ———
+    function makeModeTabs(tabsRoot, modeChanged){
+      const tabs = tabsRoot.querySelectorAll('.tab');
+      tabs.forEach(tab=>{
+        tab.addEventListener('click',()=>{
+          tabs.forEach(t=>t.classList.remove('active'));
+          tab.classList.add('active');
+          const mode = tab.dataset.mode;
+          modeChanged(mode);
+        });
+      });
+      // modo inicial
+      const active = tabsRoot.querySelector('.tab.active')?.dataset.mode || 'vuelos';
+      modeChanged(active);
+    }
+
+    // ——— UI dinámica de Privado ———
+    (function initPrivado(){
+      const root = document.getElementById('page-privado');
+      if(!root) return;
+
+      const form = document.getElementById('searchForm');
+      const toggleBot = document.getElementById('toggleBot');
+      let botOn = false;
+
+      toggleBot.addEventListener('click',()=>{
+        botOn = !botOn;
+        toggleBot.textContent = botOn ? 'ON — Bot encendido' : 'OFF — Bot apagado';
+      });
+
+      // Campos que dependen de modalidad
+      const fieldDestino = form.querySelector('[data-field="destino"]');
+      const fieldSurprise = form.querySelector('[data-field="surprise"]');
+      const fieldClase = form.querySelector('[data-field="clase"]');
+
+      function applyMode(mode){
+        // Mostrar secciones exclusivas de hospedajes
+        root.querySelectorAll('[data-mode-only]').forEach(el=>{
+          el.style.display = (el.getAttribute('data-mode-only')===mode) ? '' : 'none';
+        });
+        // En vuelos/paquetes hay destino/sorprendeme/clase
+        const showFlyStuff = (mode==='vuelos' || mode==='paquetes');
+        fieldDestino.style.display = showFlyStuff ? '' : 'none';
+        fieldSurprise.style.display = showFlyStuff ? '' : 'none';
+        fieldClase.style.display = showFlyStuff ? '' : 'none';
+      }
+
+      makeModeTabs(document.getElementById('modeTabs'), applyMode);
+
+      // Submit demo
+      form.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        data.modalidad = document.querySelector('#modeTabs .tab.active').dataset.mode;
+        // Si está sorpréndeme, vaciamos destino
+        if(data.sorprendeme === 'on') data.destino = '';
+        // TODO: fetch real
+        openModal('Pedido enviado',
+          'Esto es un demo visual. Cuando conectes la API, reemplazá el fetch en este submit. '+
+          'Datos a enviar: \n' + JSON.stringify(data, null, 2)
+        );
+      });
+
+      // Eventos de acciones en tabla
+      document.getElementById('agentsTable').addEventListener('click', (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const action = btn.dataset.action || btn.textContent.trim().toLowerCase();
+        if(action.includes('reservar')){
+          openModal('Reservar', 'Confirmá la reserva. (placeholder)', ()=>{ /* TODO fetch reservar */ });
+        }
+        if(action.includes('cancelar')){
+          openModal('Cancelar', 'Confirmá la cancelación. (placeholder)', ()=>{ /* TODO fetch cancelar */ });
+        }
+      });
+    })();
+
+    // ——— Admin ———
+    (function initAdmin(){
+      const root = document.getElementById('page-admin');
+      if(!root) return;
+
+      const adminBot = document.getElementById('adminBot');
+      let on = false;
+      adminBot.addEventListener('click', ()=>{
+        on = !on;
+        adminBot.textContent = on ? 'ON — (placeholder) Bot encendido' : 'OFF — (placeholder) Bot apagado';
+      });
+
+      makeModeTabs(document.getElementById('modeTabsAdmin'), function(){ /* solo visual */ });
+
+      // Crear / Banear (placeholder)
+      document.getElementById('createUserForm').addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        openModal('Usuario creado', 'Demo: '+JSON.stringify(data,null,2), ()=>{ /* TODO fetch crear usuario */});
+      });
+      document.getElementById('banUserForm').addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        openModal('Usuario baneado', 'Demo: '+JSON.stringify(data,null,2), ()=>{ /* TODO fetch banear usuario */});
+      });
+    })();
+
+    // ——— Modal utilitario ———
+    const back = document.getElementById('modalBack');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+    const okBtn = document.getElementById('modalOk');
+    const cancelBtn = document.getElementById('modalCancel');
+    function openModal(t, b, onOk){
+      title.textContent = t;
+      body.textContent = '';
+      if(typeof b === 'string'){ body.textContent = b; }
+      else if(b instanceof Node){ body.appendChild(b); }
+      back.classList.add('show');
+      const handler = ()=>{
+        back.classList.remove('show');
+        okBtn.removeEventListener('click', handler);
+        if(onOk) onOk();
+      };
+      okBtn.addEventListener('click', handler);
+    }
+    cancelBtn.addEventListener('click',()=> back.classList.remove('show'));
+    back.addEventListener('click',(e)=>{ if(e.target===back) back.classList.remove('show'); });
+  </script>
+</body>
+</html>
