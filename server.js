@@ -33,12 +33,13 @@ app.use(cookieParser());
   }
 })();
 
+// ====== Model ======
 const userSchema = new mongoose.Schema(
   {
     email: { type: String, unique: true, required: true },
     username: { type: String, unique: true, required: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, default: 'admin' }, // admin / user (por ahora admin)
+    role: { type: String, enum: ['admin', 'user'], default: 'user' }, // <- por defecto 'user'
   },
   { timestamps: true }
 );
@@ -97,7 +98,6 @@ function renderLayout({ title = 'CocciGO', content = '' }) {
       <div class="navlinks">
         <a href="/">Inicio</a>
         <a href="/login">Usuario Privado</a>
-        <a href="/login?admin=1">Usuario Admin</a>
       </div>
     </div>
   </div>
@@ -122,14 +122,22 @@ function authRequired(req, res, next) {
   }
 }
 
-function adminOnly(req, res, next) {
-  if (req.user?.role !== 'admin') return res.status(403).send('Forbidden');
-  next();
+function requireAdmin(req, res, next) {
+  try {
+    const token = req.cookies?.token;
+    if (!token) return res.status(401).send('Unauthorized');
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload.role !== 'admin') return res.status(403).send('Forbidden');
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).send('Unauthorized');
+  }
 }
 
 // ====== Páginas ======
 
-// Home / Inicio (simple, fondo blanco gigante como tu mockup)
+// Home / Inicio
 app.get('/', (req, res) => {
   const content = `
     <div class="card">
@@ -137,7 +145,6 @@ app.get('/', (req, res) => {
       <div class="small">Esto queda en blanco por ahora. Después le metemos mensajes lindos 😉</div>
       <div class="mt16">
         <a class="btn outline" href="/login">Entrar (Usuario Privado)</a>
-        <a class="btn outline" href="/login?admin=1">Entrar (Usuario Admin)</a>
       </div>
     </div>
   `;
@@ -152,7 +159,7 @@ app.get('/login', (req, res) => {
       <div class="h1">Login</div>
       <form method="post" action="/login" class="mt16">
         <label class="label">Usuario o Email</label>
-        <input class="input" type="text" name="usernameOrEmail" placeholder="tu usuario o email" autocomplete="username"/>
+        <input class="input" type="text" name="identifier" placeholder="tu usuario o email" autocomplete="username"/>
         <label class="label">Contraseña</label>
         <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="current-password"/>
         <button class="btn mt16" type="submit">Entrar</button>
@@ -171,25 +178,42 @@ app.get('/login', (req, res) => {
   res.send(renderLayout({ title: 'CocciGO — Login', content }));
 });
 
-// Login POST
+// === LOGIN (redirige según rol) ===
 app.post('/login', async (req, res) => {
-  const { usernameOrEmail, password } = req.body || {};
+  const { identifier, password } = req.body || {};
   try {
     const user = await User.findOne({
-      $or: [{ email: usernameOrEmail }, { username: usernameOrEmail }],
+      $or: [{ email: identifier }, { username: identifier }],
     });
-    if (!user) return res.send(renderLayout({ title: 'Login', content: `<div class="card">Usuario no encontrado.</div>` }));
+    if (!user) {
+      return res.send(
+        renderLayout({ title: 'Login', content: `<div class="card">Usuario no encontrado.</div>` })
+      );
+    }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.send(renderLayout({ title: 'Login', content: `<div class="card">Contraseña incorrecta.</div>` }));
+    if (!ok) {
+      return res.send(
+        renderLayout({ title: 'Login', content: `<div class="card">Contraseña incorrecta.</div>` })
+      );
+    }
 
     const token = jwt.sign(
       { sub: user._id.toString(), username: user.username, role: user.role },
       JWT_SECRET,
-      { expiresIn: '2h' }
+      { expiresIn: '7d' }
     );
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: true });
-    return res.redirect('/dashboard');
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirección por rol
+    if (user.role === 'admin') return res.redirect('/dashboard');
+    return res.redirect('/privado');
   } catch (err) {
     console.error('Error en /login:', err);
     return res.status(500).send('Error del servidor');
@@ -223,7 +247,7 @@ app.get('/dashboard', authRequired, (req, res) => {
   res.send(renderLayout({ title: 'CocciGO — Dashboard', content }));
 });
 
-// Usuario Privado (form “CocciGO” placeholder con tus bloques)
+// Usuario Privado (placeholder)
 app.get('/privado', authRequired, (req, res) => {
   const content = `
   <div class="card">
@@ -290,12 +314,12 @@ app.get('/privado', authRequired, (req, res) => {
 });
 
 // Panel Admin (placeholder, sólo admin)
-app.get('/admin', authRequired, adminOnly, (req, res) => {
+app.get('/admin', authRequired, requireAdmin, (req, res) => {
   const content = `
   <div class="grid two">
     <div class="card">
       <div class="h1">Otorgar usuario y contraseña</div>
-      <div class="small muted">Acá después armamos el alta/roles/permiso admin/privado.</div>
+      <div class="small muted">Alta de usuarios privados.</div>
       <form class="mt16">
         <label class="label">mail</label><input class="input" placeholder="correo@dominio.com"/>
         <label class="label">contraseña</label><input class="input" placeholder="••••••••"/>
@@ -325,6 +349,26 @@ app.get('/admin', authRequired, adminOnly, (req, res) => {
   </div>
   `;
   res.send(renderLayout({ title: 'CocciGO — Admin', content }));
+});
+
+// ====== API admin: crear usuarios privados ======
+app.post('/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const { email, username, password } = req.body || {};
+    if (!email || !username || !password) {
+      return res.status(400).json({ ok: false, msg: 'Faltan campos' });
+    }
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(409).json({ ok: false, msg: 'Ya existe' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await User.create({ email, username, passwordHash, role: 'user' });
+
+    return res.json({ ok: true, msg: 'Usuario creado' });
+  } catch (err) {
+    console.error('Error /admin/users:', err);
+    return res.status(500).json({ ok: false, msg: 'Error servidor' });
+  }
 });
 
 // ====== Seed admin al vuelo si no existe ======
