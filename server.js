@@ -395,4 +395,4 @@ app.post('/admin/users', requireAdmin, async (req, res) => {
 // ====== Start ======
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en ${PORT}`);
-})
+});
