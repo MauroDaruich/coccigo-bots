@@ -86,8 +86,8 @@ function renderLayout({ title = 'CocciGO', content = '' }) {
   <div class="navbar">
     <div class="navwrap">
       <div class="brand">
-        <!-- Logo desde /public: poné public/logo.svg -->
-        <img src="/logo.svg" alt="CocciGO"/>
+        <!-- Logo desde /public: poné public/logo.png -->
+        <img src="/logo.png" alt="CocciGO"/>
         <span>CocciGO</span>
       </div>
       <div class="navlinks">
