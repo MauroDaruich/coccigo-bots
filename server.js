@@ -409,5 +409,130 @@ async function runBotForRequest(reqDoc){
     await Request.findByIdAndUpdate(reqDoc._id, { status:'cancelado' });
   }
 }
+// ==== Providers internos ====
+// Vuelos (Kiwi/Tequila) — requiere KIWI_API_KEY en ENV para funcionar “real”
+const KIWI_API_KEY = process.env.KIWI_API_KEY || '';
+
+/**
+ * Convierte '2025-10-12' -> '12/10/2025' (formato Kiwi)
+ */
+function toKiwiDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/**
+ * Resuelve ciudad/país/continente a IATA (city) usando Kiwi Locations.
+ * Si no encuentra, devuelve null.
+ */
+async function kiwiResolveLocation(term) {
+  if (!term) return null;
+  const url = new URL('https://tequila-api.kiwi.com/locations/query');
+  url.searchParams.set('term', term);
+  url.searchParams.set('location_types', 'city');
+  url.searchParams.set('limit', '1');
+
+  const r = await fetch(url, { headers: { apikey: KIWI_API_KEY } });
+  if (!r.ok) return null;
+  const js = await r.json();
+  const loc = js?.locations?.[0];
+  if (!loc) return null;
+  // Kiwi usa codes como "BUE" (city), "MAD"
+  return { code: loc?.code, name: loc?.name, country: loc?.country?.name };
+}
+
+/**
+ * Mapea clase "turista|business|first" a Kiwi selected_cabins
+ * Econo=M, Business=C, First=F (Premium W)
+ */
+function kiwiCabin(clase) {
+  const c = String(clase || '').toLowerCase();
+  if (c === 'business') return 'C';
+  if (c === 'first' || c === 'primera' || c === 'primera clase') return 'F';
+  return 'M'; // turista/economy por default
+}
+
+/**
+ * POST /providers/vuelos
+ * Body esperado: { origen, destino, ingreso, egreso, pax, clase, sorprendeme, ... }
+ * Devuelve: { offers: [ { rutaODestino, fecha, clase, pax, precioUSD, estado } ] }
+ */
+app.post('/providers/vuelos', async (req, res) => {
+  try {
+    // Si no hay API key, indicamos que falta configurar proveedor (no simulamos)
+    if (!KIWI_API_KEY) {
+      return res.status(501).json({
+        ok: false,
+        error: 'Proveedor no configurado: falta KIWI_API_KEY en ENV',
+        howTo: 'Agregá KIWI_API_KEY en Render → Environment y redeploy.',
+      });
+    }
+
+    const {
+      origen = '',
+      destino = '',
+      ingreso = '', // ida
+      egreso = '',  // vuelta
+      pax = 1,
+      clase = 'turista',
+      sorprendeme = false,
+    } = req.body || {};
+
+    // Resolver IATA de origen/destino (si sorprendeme=true y no hay destino, ponemos un fallback común)
+    const [fromLoc, toLoc] = await Promise.all([
+      kiwiResolveLocation(origen || 'Buenos Aires'),
+      kiwiResolveLocation(destino || (sorprendeme ? 'Madrid' : destino)),
+    ]);
+
+    if (!fromLoc || !toLoc) {
+      return res.status(400).json({ ok: false, error: 'No pude resolver origen/destino a IATA' });
+    }
+
+    const dateFrom = toKiwiDate(ingreso); // ida
+    const dateTo   = toKiwiDate(egreso);  // vuelta
+    const cabins   = kiwiCabin(clase);
+    const adults   = Math.max(1, parseInt(pax || 1, 10));
+
+    const url = new URL('https://tequila-api.kiwi.com/v2/search');
+    url.searchParams.set('fly_from', fromLoc.code);
+    url.searchParams.set('fly_to', toLoc.code);
+    if (dateFrom) { url.searchParams.set('date_from', dateFrom); url.searchParams.set('date_to', dateFrom); }
+    if (dateTo)   { url.searchParams.set('return_from', dateTo); url.searchParams.set('return_to', dateTo); }
+    url.searchParams.set('adults', String(adults));
+    url.searchParams.set('selected_cabins', cabins);
+    url.searchParams.set('curr', 'USD');
+    url.searchParams.set('limit', '10');
+    url.searchParams.set('sort', 'price');
+
+    const r = await fetch(url, { headers: { apikey: KIWI_API_KEY } });
+    if (!r.ok) {
+      const msg = await r.text().catch(()=>'');
+      return res.status(502).json({ ok:false, error:`Kiwi error ${r.status}`, details: msg });
+    }
+    const data = await r.json();
+    const rows = Array.isArray(data?.data) ? data.data : [];
+
+    const offers = rows.map((it) => {
+      const route = it?.route?.[0] || {};
+      const dt    = route?.local_departure || it?.local_departure || it?.utc_departure || '';
+      const feat  = dt ? new Date(dt).toISOString().split('T')[0] : '';
+      const ruta  = `${it?.cityFrom || route?.cityFrom || fromLoc.name} → ${it?.cityTo || route?.cityTo || toLoc.name}`;
+      return {
+        rutaODestino: ruta,
+        fecha: feat,
+        clase: (clase || 'turista'),
+        pax: adults,
+        precioUSD: Number(it?.price || 0),
+        estado: 'Disponible',
+      };
+    });
+
+    return res.json({ offers });
+  } catch (err) {
+    console.error('providers/vuelos error:', err);
+    return res.status(500).json({ ok:false, error:'Server error', details:String(err?.message||err) });
+  }
+});
 
 app.listen(PORT, ()=>console.log(`Servidor escuchando en ${PORT}`));
