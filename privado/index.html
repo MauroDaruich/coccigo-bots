@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CocciGO — Panel Privado</title>
+  <style>
+    :root{ --rojo:#d90429; --negro:#0b0b0b; --card:#fff; --shadow:0 10px 25px rgba(0,0,0,.18); --radius:18px }
+    *{box-sizing:border-box} body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; background:#f6f7fb}
+    header{
+      position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid #eee;
+      display:flex; align-items:center; justify-content:space-between; padding:12px 16px;
+    }
+    .logo{display:flex; align-items:center; gap:10px; font-weight:900}
+    .ladybug{width:22px; height:22px; display:inline-block; border-radius:50%;
+      background:
+        radial-gradient(circle at 50% 50%, #ff2b2b 0 60%, transparent 61%),
+        radial-gradient(circle at 35% 40%, #000 0 12%, transparent 13%),
+        radial-gradient(circle at 65% 60%, #000 0 12%, transparent 13%);
+      position:relative;
+    }
+    .ladybug::before{content:""; position:absolute; left:50%; top:0; bottom:0; width:2px; background:#000; transform:translateX(-50%)}
+    .wrap{max-width:1100px; margin:28px auto; padding:0 16px; display:grid; gap:16px}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+    .grid{display:grid; gap:16px; grid-template-columns:1fr 1fr}
+    @media (max-width:920px){ .grid{grid-template-columns:1fr} }
+    .btn{appearance:none; border:none; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; background:#111; color:#fff}
+    .tag{display:inline-block; background:#ffe9ed; color:#a30017; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:700}
+    code{background:#f1f3f7; padding:2px 6px; border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span class="ladybug"></span> CocciGO — <span style="opacity:.7">Privado</span></div>
+    <div>
+      <button class="btn" id="btnLogout">Cerrar sesión</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="card">
+      <h2 style="margin-top:0">Bienvenido al Panel Privado</h2>
+      <p>Acá más adelante van los <b>Agentes</b> y herramientas para buscar vuelos/hoteles. Por ahora es el esqueleto.</p>
+      <span class="tag">Usuario</span>
+    </section>
+
+    <section class="card grid">
+      <div>
+        <h3 style="margin-top:0">Estado</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.7">
+          <li>Sesión activa como <code id="who"></code></li>
+          <li>Si entrás sin login te devuelve al inicio.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Próximos módulos</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.7">
+          <li>Tarjetas de agentes + acciones</li>
+          <li>Historial / logs básicos</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Mini “auth” basado en localStorage (mismo que en el Home)
+    const Auth = {
+      read(){ try{ return JSON.parse(localStorage.getItem('coccigo.session')||'null'); }catch(e){ return null } },
+      logout(){ localStorage.removeItem('coccigo.session'); }
+    };
+
+    // Guard de ruta privada
+    (function guard(){
+      const s = Auth.read();
+      if(!s){ window.location.href = '/'; return; }
+      // Si más adelante creamos rol admin, por ahora no lo usamos acá.
+      if(s.role && s.role !== 'user'){ window.location.href = '/'; return; }
+      document.getElementById('who').textContent = s.email || 'usuario';
+    })();
+
+    document.getElementById('btnLogout').addEventListener('click', ()=>{
+      Auth.logout(); window.location.href = '/';
+    });
+  </script>
+</body>
+</html>
