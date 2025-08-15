@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const path = require('path'); // <-- agregado para servir estáticos
 
 // ====== ENV ======
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,10 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// ====== Static (logo, imgs, css/js futuros) ======
+// Colocá tus assets en /public (ej: public/logo.svg)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ====== DB ======
 (async () => {
@@ -81,13 +86,14 @@ function renderLayout({ title = 'CocciGO', content = '' }) {
   <div class="navbar">
     <div class="navwrap">
       <div class="brand">
-        <!-- Cambiá la URL por la del logo real -->
-        <img src="https://coccigo.com/logo-coccigo.png" alt="CocciGO"/>
+        <!-- Logo desde /public: poné public/logo.svg -->
+        <img src="/logo.svg" alt="CocciGO"/>
         <span>CocciGO</span>
       </div>
       <div class="navlinks">
         <a href="/">Inicio</a>
         <a href="/privado">Usuario Privado</a>
+        <a href="/admin">Admin</a>
       </div>
     </div>
   </div>
@@ -255,10 +261,9 @@ app.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '2h' }
     );
-    const secureFlag = true; // Render usa HTTPS → bien con httpOnly+secure
+    const secureFlag = true; // en Render con HTTPS podemos usar secure
     res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: secureFlag });
 
-    // Redirección automática según rol
     if (user.role === 'admin') return res.redirect('/admin');
     return res.redirect('/privado');
   } catch (err) {
