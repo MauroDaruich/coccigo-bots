@@ -1,5 +1,5 @@
-// Backend con login + páginas base (Inicio / Privado / Admin)
-// ------------------------------------------------------------
+// Backend CocciGO (login + Inicio / Privado / Admin unificados)
+// -------------------------------------------------------------
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -39,220 +39,67 @@ const userSchema = new mongoose.Schema(
     email: { type: String, unique: true, required: true },
     username: { type: String, unique: true, required: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'user'], default: 'user' }, // <- por defecto 'user'
+    role: { type: String, default: 'admin' }, // admin / user (por ahora admin)
   },
   { timestamps: true }
 );
-
 const User = mongoose.model('User', userSchema);
 
-// ====== helpers ======
+// ====== UI helpers ======
 function renderLayout({ title = 'CocciGO', content = '' }) {
   return `
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>${title}</title>
-  <style>
-    :root{
-      --bg:#0f1115; --panel:#161a22; --muted:#9aa4b2; --text:#eaeef3; --brand:#6e7cff; --ok:#2ecc71; --warn:#ffcc00; --bad:#ff6b6b;
-    }
-    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Arial}
-    body{margin:0;background:var(--bg);color:var(--text)}
-    a{color:var(--brand);text-decoration:none}
-    .container{max-width:1040px;margin:24px auto;padding:0 16px}
-    .navbar{background:#0b0e13;border-bottom:1px solid #202633}
-    .navwrap{max-width:1040px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
-    .brand{display:flex;gap:10px;align-items:center;font-weight:700}
-    .navlinks a{margin:0 10px;color:var(--muted)}
-    .btn{background:var(--brand);color:white;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
-    .btn.outline{background:transparent;border:1px solid #2a3350}
-    .card{background:var(--panel);border:1px solid #222a39;border-radius:16px;padding:18px}
-    .grid{display:grid;gap:16px}
-    .grid.two{grid-template-columns:1fr}
-    @media(min-width:900px){.grid.two{grid-template-columns:1.2fr 1fr}}
-    .label{display:block;color:var(--muted);font-size:12px;margin:8px 0 6px}
-    .input,.select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2a3350;background:#0e1420;color:var(--text)}
-    .pill{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;border:1px solid #2a3350;color:var(--muted)}
-    .muted{color:var(--muted)}
-    .table{border-collapse:collapse;width:100%}
-    .table td,.table th{border-bottom:1px solid #222a39;padding:10px 8px;text-align:left}
-    .status{font-weight:600}
-    .ok{color:var(--ok)} .bad{color:var(--bad)}
-    .warn{color:var(--warn)}
-    .h1{font-size:28px;margin:6px 0 4px}
-    .small{font-size:12px;color:var(--muted)}
-    .right{text-align:right}
-    .mt8{margin-top:8px} .mt16{margin-top:16px} .mt24{margin-top:24px}
-  </style>
-</head>
-<body>
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${title}</title>
+<style>
+  :root{--bg:#0f1115;--panel:#161a22;--muted:#9aa4b2;--text:#eaeef3;--brand:#6e7cff;--ok:#2ecc71;--warn:#ffcc00;--bad:#ff6b6b;}
+  *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Arial}
+  body{margin:0;background:var(--bg);color:var(--text)}
+  a{color:var(--brand);text-decoration:none}
+  .container{max-width:1040px;margin:24px auto;padding:0 16px}
+  .navbar{background:#0b0e13;border-bottom:1px solid #202633}
+  .navwrap{max-width:1040px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:10px;align-items:center;font-weight:700}
+  .brand img{height:28px}
+  .navlinks a{margin:0 10px;color:var(--muted)}
+  .btn{background:var(--brand);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+  .btn.outline{background:transparent;border:1px solid #2a3350}
+  .card{background:var(--panel);border:1px solid #222a39;border-radius:16px;padding:18px}
+  .grid{display:grid;gap:16px}
+  .grid.two{grid-template-columns:1fr}
+  @media(min-width:900px){.grid.two{grid-template-columns:1.2fr 1fr}}
+  .label{display:block;color:var(--muted);font-size:12px;margin:8px 0 6px}
+  .input,.select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2a3350;background:#0e1420;color:var(--text)}
+  .table{border-collapse:collapse;width:100%}
+  .table td,.table th{border-bottom:1px solid #222a39;padding:10px 8px;text-align:left}
+  .h1{font-size:28px;margin:6px 0 4px}
+  .small{font-size:12px;color:var(--muted)}
+  .right{text-align:right}
+  .mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+</style>
+</head><body>
   <div class="navbar">
     <div class="navwrap">
       <div class="brand">
-        <span>🐞</span>
+        <!-- Cambiá la URL por la del logo real -->
+        <img src="https://coccigo.com/logo-coccigo.png" alt="CocciGO"/>
         <span>CocciGO</span>
       </div>
       <div class="navlinks">
         <a href="/">Inicio</a>
-        <a href="/login">Usuario Privado</a>
+        <a href="/privado">Usuario Privado</a>
       </div>
     </div>
   </div>
-
-  <div class="container">
-    ${content}
-  </div>
-</body>
-</html>
-  `;
+  <div class="container">${content}</div>
+</body></html>`;
 }
 
-function authRequired(req, res, next) {
-  try {
-    const token = req.cookies?.token;
-    if (!token) return res.redirect('/login');
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
-    next();
-  } catch {
-    return res.redirect('/login');
-  }
-}
-
-function requireAdmin(req, res, next) {
-  try {
-    const token = req.cookies?.token;
-    if (!token) return res.status(401).send('Unauthorized');
-    const payload = jwt.verify(token, JWT_SECRET);
-    if (payload.role !== 'admin') return res.status(403).send('Forbidden');
-    req.user = payload;
-    next();
-  } catch {
-    return res.status(401).send('Unauthorized');
-  }
-}
-
-// ====== Páginas ======
-
-// Home / Inicio
-app.get('/', (req, res) => {
-  const content = `
-    <div class="card">
-      <div class="h1">Inicio</div>
-      <div class="small">Esto queda en blanco por ahora. Después le metemos mensajes lindos 😉</div>
-      <div class="mt16">
-        <a class="btn outline" href="/login">Entrar (Usuario Privado)</a>
-      </div>
-    </div>
-  `;
-  res.send(renderLayout({ title: 'CocciGO — Inicio', content }));
-});
-
-// Página de login
-app.get('/login', (req, res) => {
-  const content = `
-  <div class="grid two">
-    <div class="card">
-      <div class="h1">Login</div>
-      <form method="post" action="/login" class="mt16">
-        <label class="label">Usuario o Email</label>
-        <input class="input" type="text" name="identifier" placeholder="tu usuario o email" autocomplete="username"/>
-        <label class="label">Contraseña</label>
-        <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="current-password"/>
-        <button class="btn mt16" type="submit">Entrar</button>
-      </form>
-      <div class="small mt16 muted">Si no recordás tus credenciales, pedilas al admin.</div>
-    </div>
-
-    <div class="card">
-      <div class="h1">Accesos rápidos (demo)</div>
-      <div class="small">Usuario Admin (seed):</div>
-      <div class="small muted">usuario/email: <b>${ADMIN_USERNAME}</b> ó <b>${ADMIN_EMAIL}</b></div>
-      <div class="small muted">pass: <b>${ADMIN_PASSWORD}</b></div>
-    </div>
-  </div>
-  `;
-  res.send(renderLayout({ title: 'CocciGO — Login', content }));
-});
-
-// === LOGIN (redirige según rol) ===
-app.post('/login', async (req, res) => {
-  const { identifier, password } = req.body || {};
-  try {
-    const user = await User.findOne({
-      $or: [{ email: identifier }, { username: identifier }],
-    });
-    if (!user) {
-      return res.send(
-        renderLayout({ title: 'Login', content: `<div class="card">Usuario no encontrado.</div>` })
-      );
-    }
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      return res.send(
-        renderLayout({ title: 'Login', content: `<div class="card">Contraseña incorrecta.</div>` })
-      );
-    }
-
-    const token = jwt.sign(
-      { sub: user._id.toString(), username: user.username, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // Redirección por rol
-    if (user.role === 'admin') return res.redirect('/dashboard');
-    return res.redirect('/privado');
-  } catch (err) {
-    console.error('Error en /login:', err);
-    return res.status(500).send('Error del servidor');
-  }
-});
-
-// Logout
-app.post('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.redirect('/login');
-});
-
-// Dashboard (privado, para todos los logueados)
-app.get('/dashboard', authRequired, (req, res) => {
-  const content = `
-  <div class="grid two">
-    <div class="card">
-      <div class="h1">Hola, ${req.user.username} 👋</div>
-      <div class="small">Bienvenido al panel básico. Después metemos métricas, usuarios, etc.</div>
-      <form class="mt16" method="post" action="/logout">
-        <button class="btn bad" style="background:var(--bad)" type="submit">Salir</button>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="h1">Tu sesión</div>
-      <pre class="small muted" style="white-space:pre-wrap">${JSON.stringify({ ok:true, user:req.user }, null, 2)}</pre>
-    </div>
-  </div>
-  `;
-  res.send(renderLayout({ title: 'CocciGO — Dashboard', content }));
-});
-
-// Usuario Privado (placeholder)
-app.get('/privado', authRequired, (req, res) => {
-  const content = `
+function viewPrivado() {
+  return `
   <div class="card">
     <div class="h1">CocciGO</div>
-    <div class="small muted">Elegí un destino puntual, una región o activá "Sorprendeme". Después podés enviar el pedido.</div>
+    <div class="small">Elegí un destino puntual, una región o activá "Sorprendeme". Después podés enviar el pedido.</div>
 
     <div class="grid two mt16">
       <div class="card">
@@ -262,15 +109,12 @@ app.get('/privado', authRequired, (req, res) => {
         <label class="label">Región</label>
         <select class="select">
           <option>— Seleccionar —</option>
-          <option>Europa</option>
-          <option>América</option>
-          <option>Asia</option>
+          <option>Europa</option><option>América</option><option>Asia</option>
         </select>
 
         <label class="label">Modo</label>
         <select class="select">
-          <option>Sorprendeme 🪄</option>
-          <option>Manual</option>
+          <option>Sorprendeme 🪄</option><option>Manual</option>
         </select>
 
         <label class="label">Presupuesto aprox. (USD, opcional)</label>
@@ -284,7 +128,7 @@ app.get('/privado', authRequired, (req, res) => {
 
       <div class="card">
         <div class="h1">Opciones (placeholder)</div>
-        <div class="small">Faltan: Vuelos · Hospedajes · Paquetes + los campos de origen/destino/fechas/clase/estrellas/cantidad/…</div>
+        <div class="small">Faltan: Vuelos · Hospedajes · Paquetes + campos de origen/destino/fechas/clase/estrellas/cantidad…</div>
       </div>
     </div>
 
@@ -293,33 +137,20 @@ app.get('/privado', authRequired, (req, res) => {
       <table class="table small">
         <thead><tr><th>Estado</th><th>Ruta</th><th>Precio</th><th class="right">Acción</th></tr></thead>
         <tbody>
-          <tr>
-            <td class="status ok">Disponible</td>
-            <td>Buenos Aires → Miami</td>
-            <td>USD 560</td>
-            <td class="right"><button class="btn">Reservar</button></td>
-          </tr>
-          <tr>
-            <td class="status bad">Cancelado</td>
-            <td>Buenos Aires → Miami</td>
-            <td>—</td>
-            <td class="right"><button class="btn outline" disabled>Cancelar</button></td>
-          </tr>
+          <tr><td style="color:#2ecc71">Disponible</td><td>Buenos Aires → Miami</td><td>USD 560</td><td class="right"><button class="btn">Reservar</button></td></tr>
+          <tr><td style="color:#ff6b6b">Cancelado</td><td>Buenos Aires → Miami</td><td>—</td><td class="right"><button class="btn outline" disabled>Cancelar</button></td></tr>
         </tbody>
       </table>
     </div>
-  </div>
-  `;
-  res.send(renderLayout({ title: 'CocciGO — Usuario Privado', content }));
-});
+  </div>`;
+}
 
-// Panel Admin (placeholder, sólo admin)
-app.get('/admin', authRequired, requireAdmin, (req, res) => {
-  const content = `
-  <div class="grid two">
+function viewAdmin() {
+  return `
+  <div class="grid two mt24">
     <div class="card">
       <div class="h1">Otorgar usuario y contraseña</div>
-      <div class="small muted">Alta de usuarios privados.</div>
+      <div class="small">Alta de usuarios privados (placeholder).</div>
       <form class="mt16">
         <label class="label">mail</label><input class="input" placeholder="correo@dominio.com"/>
         <label class="label">contraseña</label><input class="input" placeholder="••••••••"/>
@@ -329,7 +160,7 @@ app.get('/admin', authRequired, requireAdmin, (req, res) => {
     <div class="card">
       <div class="h1">Banear usuario</div>
       <label class="label">mail</label><input class="input" placeholder="correo@dominio.com"/>
-      <button class="btn mt16" style="background:var(--bad)" disabled>Banear (placeholder)</button>
+      <button class="btn mt16" style="background:#ff6b6b" disabled>Banear (placeholder)</button>
     </div>
   </div>
 
@@ -339,39 +170,128 @@ app.get('/admin', authRequired, requireAdmin, (req, res) => {
       <thead><tr><th>Usuario</th><th>Inicio</th><th>Fin</th><th class="right">Acción</th></tr></thead>
       <tbody>
         <tr>
-          <td>juan@mail.com</td>
-          <td>2025-08-14 10:00</td>
-          <td>2025-08-14 10:45</td>
+          <td>juan@mail.com</td><td>2025-08-14 10:00</td><td>2025-08-14 10:45</td>
           <td class="right"><button class="btn outline" disabled>Detener (placeholder)</button></td>
         </tr>
       </tbody>
     </table>
-  </div>
+  </div>`;
+}
+
+// ====== Auth helpers ======
+function authRequired(req, res, next) {
+  try {
+    const token = req.cookies?.token;
+    if (!token) return res.redirect('/login');
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch {
+    return res.redirect('/login');
+  }
+}
+
+function adminOnly(req, res, next) {
+  if (req.user?.role !== 'admin') return res.status(403).send('Forbidden');
+  next();
+}
+
+// ====== Rutas ======
+
+// Home / Inicio (placeholder simple)
+app.get('/', (req, res) => {
+  const content = `
+    <div class="card">
+      <div class="h1">Inicio</div>
+      <div class="small">Esto queda en blanco por ahora. Después le metemos mensajes lindos 😉</div>
+      <div class="mt16">
+        <a class="btn outline" href="/login">Entrar (Usuario Privado)</a>
+      </div>
+    </div>
   `;
-  res.send(renderLayout({ title: 'CocciGO — Admin', content }));
+  res.send(renderLayout({ title: 'CocciGO — Inicio', content }));
 });
 
-// ====== API admin: crear usuarios privados ======
-app.post('/admin/users', requireAdmin, async (req, res) => {
+// Login (GET)
+app.get('/login', (req, res) => {
+  const content = `
+  <div class="grid two">
+    <div class="card">
+      <div class="h1">Login</div>
+      <form method="post" action="/login" class="mt16">
+        <label class="label">Usuario o Email</label>
+        <input class="input" type="text" name="usernameOrEmail" placeholder="tu usuario o email" autocomplete="username"/>
+        <label class="label">Contraseña</label>
+        <input class="input" type="password" name="password" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="btn mt16" type="submit">Entrar</button>
+      </form>
+      <div class="small mt16">Si no recordás tus credenciales, pedilas al admin.</div>
+    </div>
+
+    <div class="card">
+      <div class="h1">Accesos rápidos (demo)</div>
+      <div class="small">Usuario Admin (seed):</div>
+      <div class="small">usuario/email: <b>${ADMIN_USERNAME}</b> ó <b>${ADMIN_EMAIL}</b></div>
+      <div class="small">pass: <b>${ADMIN_PASSWORD}</b></div>
+    </div>
+  </div>`;
+  res.send(renderLayout({ title: 'CocciGO — Login', content }));
+});
+
+// Login (POST)
+app.post('/login', async (req, res) => {
+  const { usernameOrEmail, password } = req.body || {};
   try {
-    const { email, username, password } = req.body || {};
-    if (!email || !username || !password) {
-      return res.status(400).json({ ok: false, msg: 'Faltan campos' });
-    }
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(409).json({ ok: false, msg: 'Ya existe' });
+    const user = await User.findOne({
+      $or: [{ email: usernameOrEmail }, { username: usernameOrEmail }],
+    });
+    if (!user) return res.send(renderLayout({ title: 'Login', content: `<div class="card">Usuario no encontrado.</div>` }));
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    await User.create({ email, username, passwordHash, role: 'user' });
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.send(renderLayout({ title: 'Login', content: `<div class="card">Contraseña incorrecta.</div>` }));
 
-    return res.json({ ok: true, msg: 'Usuario creado' });
+    const token = jwt.sign(
+      { sub: user._id.toString(), username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+    const secureFlag = true; // Render usa HTTPS → bien con httpOnly+secure
+    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: secureFlag });
+
+    // Redirección automática según rol
+    if (user.role === 'admin') return res.redirect('/admin');
+    return res.redirect('/privado');
   } catch (err) {
-    console.error('Error /admin/users:', err);
-    return res.status(500).json({ ok: false, msg: 'Error servidor' });
+    console.error('Error en /login:', err);
+    return res.status(500).send('Error del servidor');
   }
 });
 
-// ====== Seed admin al vuelo si no existe ======
+// Logout
+app.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.redirect('/login');
+});
+
+// Redirección “/dashboard” → por rol
+app.get('/dashboard', authRequired, (req, res) => {
+  if (req.user.role === 'admin') return res.redirect('/admin');
+  return res.redirect('/privado');
+});
+
+// Usuario Privado
+app.get('/privado', authRequired, (req, res) => {
+  const content = viewPrivado();
+  res.send(renderLayout({ title: 'CocciGO — Usuario Privado', content }));
+});
+
+// Panel Admin (incluye Privado + Admin)
+app.get('/admin', authRequired, adminOnly, (req, res) => {
+  const content = `${viewPrivado()}${viewAdmin()}`;
+  res.send(renderLayout({ title: 'CocciGO — Admin', content }));
+});
+
+// ====== Seed admin (una vez) ======
 (async () => {
   try {
     const exists = await User.findOne({ email: ADMIN_EMAIL });
