@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CocciGO — Admin</title>
+  <style>
+    :root{--bg:#0f0f12;--card:#17171b;--txt:#e9e9ea;--sub:#b4b4b8;--acc:#eab308}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial;background:var(--bg);color:var(--txt)}
+    .wrap{max-width:1100px;margin:0 auto;padding:32px}
+    a{color:inherit}
+    .back{display:inline-block;margin-bottom:14px;color:#9aa}
+    main{background:var(--card);border:1px solid #2a2a30;border-radius:18px;padding:24px}
+    h1{margin:0 0 6px 0}
+    p{color:var(--sub)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px}
+    .card{border:1px solid #2a2a30;border-radius:14px;padding:16px;background:#1a1a1f}
+    .card h3{margin:0 0 8px 0;font-size:18px}
+    .btn{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid #2a2a30;background:#202028;color:var(--txt);font-weight:600}
+    .btn:hover{border-color:#3a3a40}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← Volver al inicio</a>
+    <main>
+      <h1>Panel Admin</h1>
+      <p>Incluye todo lo del Usuario Privado + herramientas de administración.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Usuarios</h3>
+          <p>Crear, editar, suspender usuarios.</p>
+          <button class="btn" onclick="alert('Admin/Usuarios — conectar a /admin/users')">Abrir</button>
+        </div>
+
+        <div class="card">
+          <h3>Actividades</h3>
+          <p>Ver logs y actividad de los agentes.</p>
+          <button class="btn" onclick="alert('Admin/Actividades — conectar a /admin/logs')">Ver</button>
+        </div>
+
+        <div class="card">
+          <h3>Parámetros de agentes</h3>
+          <p>Configurar velocidad, prioridades y límites.</p>
+          <button class="btn" onclick="alert('Admin/Agentes — conectar a /admin/agents')">Abrir</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE_URL = "https://TU-BACKEND-EN-RENDER.onrender.com"; // ← REEMPLAZAR
+  </script>
+</body>
+</html>
