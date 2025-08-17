@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CocciGO — Usuario Privado</title>
+  <style>
+    :root{--bg:#0f0f12;--card:#17171b;--txt:#e9e9ea;--sub:#b4b4b8;--acc:#22c55e}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial;background:var(--bg);color:var(--txt)}
+    .wrap{max-width:980px;margin:0 auto;padding:32px}
+    a{color:inherit}
+    .crumbs{font-size:14px;color:var(--sub);margin-bottom:12px}
+    main{background:var(--card);border:1px solid #2a2a30;border-radius:18px;padding:24px}
+    h1{margin:0 0 8px 0}
+    p{color:var(--sub)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px}
+    .card{border:1px solid #2a2a30;border-radius:14px;padding:16px;background:#1a1a1f}
+    .card h3{margin:0 0 8px 0;font-size:18px}
+    .btn{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid #2a2a30;background:#202028;color:var(--txt);font-weight:600}
+    .btn:hover{border-color:#3a3a40}
+    .back{display:inline-block;margin-bottom:14px;color:#9aa}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← Volver al inicio</a>
+    <main>
+      <h1>Usuario Privado</h1>
+      <p>Herramientas disponibles sólo para cuentas autorizadas.</p>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Agente de cotización</h3>
+          <p>Envía una solicitud de cotización simplificada.</p>
+          <button class="btn" onclick="alert('Agente de cotización — conectar al backend cuando definas API_BASE_URL')">Abrir</button>
+        </div>
+
+        <div class="card">
+          <h3>Historial</h3>
+          <p>Consulta tus últimas búsquedas y reservas.</p>
+          <button class="btn" onclick="alert('Historial — requiere endpoint /user/history')">Ver</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Configuración del backend (Render u otro)
+    const API_BASE_URL = "https://TU-BACKEND-EN-RENDER.onrender.com"; // ← REEMPLAZAR
+    // Ejemplo de llamada (cuando conectemos):
+    // fetch(`${API_BASE_URL}/api/ping`).then(r=>r.json()).then(console.log);
+  </script>
+</body>
+</html>
