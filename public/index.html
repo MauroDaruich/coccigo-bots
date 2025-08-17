@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CocciGO — Viajes & Hoteles</title>
+  <style>
+    :root{--bg:#0f0f12;--card:#17171b;--txt:#e9e9ea;--sub:#b4b4b8;--acc:#e11d48;}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial;background:var(--bg);color:var(--txt)}
+    .wrap{max-width:980px;margin:0 auto;padding:32px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .logo{display:flex;gap:10px;align-items:center}
+    .logo-bug{width:28px;height:28px;border-radius:50%;background:var(--acc);position:relative;box-shadow:0 6px 20px #e11d4833}
+    .logo-bug::before,.logo-bug::after{content:"";position:absolute;background:#111;border-radius:2px;width:4px;height:4px}
+    .logo-bug::before{left:7px;top:6px}.logo-bug::after{right:7px;bottom:6px}
+    h1{font-size:28px;margin:0}
+    main{background:var(--card);border:1px solid #2a2a30;border-radius:18px;padding:28px}
+    p{color:var(--sub);line-height:1.6}
+    .cta{display:flex;gap:16px;margin-top:18px;flex-wrap:wrap}
+    .btn{padding:12px 16px;border-radius:12px;border:1px solid #2a2a30;background:#1c1c21;color:var(--txt);text-decoration:none;font-weight:600}
+    .btn:hover{border-color:#3a3a40;transform:translateY(-1px)}
+    .btn-primary{background:var(--acc);border-color:#b31337}
+    footer{margin-top:28px;color:#8a8a90;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="logo-bug" aria-hidden="true"></div>
+        <h1>CocciGO</h1>
+      </div>
+    </header>
+
+    <main>
+      <h2 style="margin-top:0">Página principal</h2>
+      <p>
+        CocciGO es una página destinada a que mis amigos viajen al mejor precio.  
+        En el inicio <strong>no hay buscador</strong>. El acceso a funciones está dentro de
+        <em>Usuario Privado</em> y <em>Admin</em>.
+      </p>
+
+      <div class="cta">
+        <a class="btn btn-primary" href="/privado/">Usuario Privado</a>
+        <a class="btn" href="/admin/">Admin</a>
+      </div>
+
+      <footer>© CocciGO — Página viajes · hoteles</footer>
+    </main>
+  </div>
+</body>
+</html>
